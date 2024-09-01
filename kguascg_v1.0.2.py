@@ -150,9 +150,9 @@ def main(ucm_ip, username, password):
                 print("Invalid IP address. Please enter a valid IPv4 address.")
                 
     if username == "":
-        username = input("Enter API username: ")
+        username = input("Enter API username >")
     if password == "":
-        password = input("Enter API password: ")
+        password = input("Enter API password >")
 
     try:
         # Fetch the challenge and generate the token
