@@ -139,7 +139,7 @@ def main(ucm_ip, username, password):
     # Prompt user for SIP server details and credentials
     if ucm_ip == "":
         while True:
-            ucm_ip = input("Enter the UCM IP address >")
+            ucm_ip = input("Enter the UCM IP address > ")
             if is_valid_ip(ucm_ip):
                 if is_valid_subnet_mask(ucm_ip):
                     print("Entered value is Subnet Mask not IP Addresss")
@@ -150,9 +150,9 @@ def main(ucm_ip, username, password):
                 print("Invalid IP address. Please enter a valid IPv4 address.")
                 
     if username == "":
-        username = input("Enter API username >")
+        username = input("Enter API username > ")
     if password == "":
-        password = input("Enter API password >")
+        password = input("Enter API password > ")
 
     try:
         # Fetch the challenge and generate the token
