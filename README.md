@@ -50,6 +50,76 @@ The script will display:
 - The authentication token and session cookie.
 - The system status information retrieved from the server.
 
+### New Features in Version 1.0.6
+
+1. **Error Return Codes Dictionary**
+   - A dictionary `ERROR_RETURN_CODES` has been added to map server response status codes to human-readable error messages. This provides more meaningful feedback when errors occur.
+   - Example:
+     ```python
+     ERROR_RETURN_CODES = {
+         0   : "Success",
+         -1  : "Invalid parameters",
+         -5  : "Need authentication",
+         ...
+     }
+     ```
+
+2. **Formatted JSON Output**
+   - Integrated JSON pretty-printing using `json.dumps` to display server responses in a human-readable format.
+   - Example:
+     ```python
+     print("Response:", json.dumps(result, indent=4))
+     ```
+
+3. **Enhanced User Input for Additional Options**
+   - The script now allows users to input multiple options dynamically for various actions. For example, when the user inputs "cdrapi", it prompts for the required "format" option and allows additional options to be added interactively.
+
+4. **Specific Handling for Certain Actions**
+   - Custom prompts are added for specific actions like `"cdrapi"` or `"pmsapi"` where certain mandatory options (such as `"format"`) are required.
+
+5. **Improved User Experience for Exiting**
+   - Added flexibility for exiting the script by typing "quit" or "exit".
+
+6. **Enhanced Logging of Requests and Server Responses**
+   - The script now logs request payloads and server responses to provide transparency and assist in debugging.
+   - Example:
+     ```python
+     print("request: ", payload)
+     print("Server response:", response.text)
+     ```
+
+### Changes
+
+1. **Version Number Update**
+   - Updated from `1.0.3` to `1.0.6` to reflect new changes and features.
+
+2. **Incorporation of `ERROR_RETURN_CODES` in Responses**
+   - Uses `ERROR_RETURN_CODES` to display a user-friendly error message corresponding to the API's numeric status code.
+   - Example:
+     ```python
+     status = response.json().get("status", {})
+     print(ERROR_RETURN_CODES[int(status)])
+     ```
+
+3. **Error Handling Enhancements**
+   - Improved error handling to provide more descriptive messages based on server responses.
+
+4. **Refactored `perform_action` Function**
+   - The function now accepts dynamic additional options (`options` parameter) to be passed into the request payload.
+   - Example:
+     ```python
+     if options:
+         payload["request"].update(options)
+     ```
+
+### Usage
+
+To run the script, use the following command:
+
+  ```bash
+    python kguascg.py -I <UCM IP Address> -P <UCM Port Number> -u <API Username> -p <API Password>
+  ```
+
 ### Example
 Here is an example of how the script might be executed:
 
