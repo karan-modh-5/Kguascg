@@ -105,7 +105,7 @@ def get_challenge_response(ucm_ip, ucm_port, username, password):
     if response.status_code == 200:
         challenge = response.json().get("response", {}).get("challenge")
         status = response.json().get("status", {})
-        print(ERROR_RETURN_CODES[int(status)])
+        print(status, ERROR_RETURN_CODES[int(status)])
         if challenge:
             md5_hash = hashlib.md5((challenge + password).encode()).hexdigest()
             return md5_hash
@@ -133,7 +133,7 @@ def login_with_token(ucm_ip, ucm_port, username, token):
     if response.status_code == 200:
         cookie = response.json().get("response", {}).get("cookie")
         status = response.json().get("status", {})
-        print(ERROR_RETURN_CODES[int(status)])        
+        print(status, ERROR_RETURN_CODES[int(status)])
         if cookie:
             return cookie
         else:
@@ -161,8 +161,11 @@ def perform_action(ucm_ip, ucm_port, cookie, action, options=None):
     print("request: ", payload)
     response = requests.post(url, json=payload, headers=headers, verify=False)
     if response.status_code == 200:
-        status = response.json().get("status", {})
-        print(ERROR_RETURN_CODES[int(status)])        
+        try:
+            status = response.json().get("status", {})
+            print(status, ERROR_RETURN_CODES[int(status)])
+        except:
+            print("NO Status Code")
         return response.json()
     else:
         raise ValueError(f"Error performing action '{action}': {response.status_code} - {response.text}")
