@@ -8,13 +8,14 @@ import warnings
 import json  # Import the json module for pretty printing
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-version = "1.0.6"
+version = "1.0.7"
 
 # Initialize variables
 ucm_ip = ""
 ucm_port = ""
 username = ""
 password = ""
+api_version = ""
 
 def is_valid_ip(ip):
     # Regular expression pattern for valid IPv4 addresses
@@ -24,31 +25,13 @@ def is_valid_ip(ip):
                             r"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
     return bool(ip_pattern.match(ip))  # Return True if valid, False otherwise
 
-parser = argparse.ArgumentParser(description="karan's grandstream ucm api session cookie generator")
-parser.add_argument("-v", action="store_true", help="Print version info")
-parser.add_argument("-I", help="UCM IP Address")
-parser.add_argument("-P", help="UCM Port Number")
-parser.add_argument("-u", help="API Username")
-parser.add_argument("-p", help="API User Password")
-
-args = parser.parse_args()
-
-if args.v:
-    print("\nkguascg version: {}".format(version))
-    sys.exit(0)
-
-if args.I:
-    if is_valid_ip(args.I):
-        ucm_ip = args.I
-
-if args.u:
-    username = args.u
-
-if args.p:
-    password = args.p
-
-if args.P:
-    ucm_port = args.P
+def is_valid_subnet_mask(subnet_mask):
+    try:
+        # Parse the subnet mask
+        subnet = ipaddress.IPv4Network(f"0.0.0.0/{subnet_mask}", strict=False)
+        return not subnet.with_prefixlen.endswith('/0')
+    except ValueError:
+        return False
 
 ERROR_RETURN_CODES = {
     0	: "Success",
@@ -81,16 +64,53 @@ ERROR_RETURN_CODES = {
     -98	: "There are currently digital calls. Failed to apply configuration",
 }
 
+parser = argparse.ArgumentParser(description="karan's grandstream ucm api session cookie generator")
+parser.add_argument("-v", action="store_true", help="Print version info")
+parser.add_argument("-e", help="ERROR RETURN CODES Meaning")
+parser.add_argument("-I", help="UCM IP Address")
+parser.add_argument("-P", help="UCM Port Number")
+parser.add_argument("-u", help="API Username")
+parser.add_argument("-p", help="API User Password")
+parser.add_argument("-V", help="API Version")
+
+args = parser.parse_args()
+
+if args.v:
+    print("\nkguascg version: {}".format(version))
+    sys.exit(0)
+
+if args.e:
+    print(args.e, ERROR_RETURN_CODES[int(args.e)])
+    sys.exit(0)
+
+if args.I:
+    if is_valid_ip(args.I):
+        if not is_valid_subnet_mask(args.I):
+            ucm_ip = args.I
+
+if args.u:
+    username = args.u
+
+if args.p:
+    password = args.p
+
+if args.P:
+    ucm_port = args.P
+
+if args.V:
+    if args.V== "1.0" or args.V == "1.1":
+        api_version = args.V
+
 # Suppress InsecureRequestWarning from urllib3
 warnings.simplefilter('ignore', InsecureRequestWarning)
 
-def get_challenge_response(ucm_ip, ucm_port, username, password):
+def get_challenge_response(ucm_ip, ucm_port, username, password, api_version):
     url = f"https://{ucm_ip}:{ucm_port}/api"
     payload = {
         "request": {
             "action": "challenge",
             "user": username,
-            "version": "1.0"
+            "version": api_version
         }
     }
     headers = {
@@ -205,12 +225,29 @@ def additional_actions(ucm_ip, ucm_port, cookie):
         except Exception as e:
             print(f"Error: {str(e)}")
 
-def main(ucm_ip, ucm_port, username, password):
+def main(ucm_ip, ucm_port, username, password, api_version):
     # Prompt for user input if not provided via arguments
-    if not ucm_ip:
-        ucm_ip = input("Enter the UCM IP address > ").strip()
+    if api_version == "":
+        while True:
+            api_version = input("Enter API Version > ")
+            try:
+                if api_version == "1.0" or api_version == "1.1":
+                    break
+            except:
+                continue
+    if ucm_ip == "":
+        while True:
+            ucm_ip = input("Enter the UCM IP address > ")
+            if is_valid_ip(ucm_ip):
+                if is_valid_subnet_mask(ucm_ip):
+                    print("Entered value is Subnet Mask not IP Addresss")
+                    continue
+                else:
+                    break
+            else:
+                print("Invalid IP address. Please enter a valid IPv4 address.")
     if not ucm_port:
-        ucm_port = input("Enter SIP server port (e.g., 8089): ").strip() or "8089"
+        ucm_port = input("Enter SIP server port (e.g., 8089) > ").strip() or "8089"
     if not username:
         username = input("Enter API username > ").strip()
     if not password:
@@ -218,7 +255,7 @@ def main(ucm_ip, ucm_port, username, password):
 
     try:
         # Fetch challenge response and login
-        token = get_challenge_response(ucm_ip, ucm_port, username, password)
+        token = get_challenge_response(ucm_ip, ucm_port, username, password, api_version)
         cookie = login_with_token(ucm_ip, ucm_port, username, token)
         print("Login successful. Cookie:", cookie)
 
@@ -232,9 +269,10 @@ def main(ucm_ip, ucm_port, username, password):
 
     except Exception as e:
         print(f"Error: {str(e)}")
+
 try:
     if __name__ == "__main__":
-        main(ucm_ip, ucm_port, username, password)
+        main(ucm_ip, ucm_port, username, password, api_version)
 except:
     print("\nkguascg Stop Executing.")
 
